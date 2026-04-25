@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Campus Companion XR · 校园心灵伴侣 XR</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "three":         "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ══ LOADING ════════════════════════════════════════════ -->
+  <div id="loading-screen">
+    <div class="loading-content">
+      <div class="loading-logo">🌸</div>
+      <h1>Campus Companion <span class="xr-badge">XR</span></h1>
+      <p class="loading-sub">校园心灵伴侣 · Your AI Wellbeing Companion</p>
+      <div class="loading-bar-wrap"><div class="loading-progress"></div></div>
+      <p class="loading-hint">Building your healing space… 正在构建疗愈空间…</p>
+    </div>
+  </div>
+
+  <!-- ══ AVATAR SELECTION ════════════════════════════════════ -->
+  <div id="avatar-select" class="hidden overlay-center">
+    <div class="card avatar-card">
+      <div class="card-emoji">👥</div>
+      <h2>Choose Your Companion</h2>
+      <p class="card-sub">选择你的心灵伴侣</p>
+      <div class="avatar-options">
+        <button class="avatar-btn" data-gender="female">
+          <span class="av-emoji">👩‍🎓</span>
+          <span class="av-label-en">Female</span>
+          <span class="av-label-zh">女生伴侣</span>
+        </button>
+        <button class="avatar-btn" data-gender="male">
+          <span class="av-emoji">👨‍🎓</span>
+          <span class="av-label-en">Male</span>
+          <span class="av-label-zh">男生伴侣</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ AR STUDY PROMPT ══════════════════════════════════════ -->
+  <div id="ar-prompt" class="hidden overlay-center">
+    <div class="card">
+      <div class="card-emoji">📚</div>
+      <h2>Enter AR Study Room</h2>
+      <p class="card-sub">进入 AR 学习模式</p>
+      <p class="card-hint">Switch to AR passthrough — your AI tutor will appear in your real environment.<br>切换为 AR 直通模式，AI 家教将出现在你的真实环境中。</p>
+      <div class="api-btns">
+        <button id="cancel-ar-btn" class="btn-secondary" onclick="document.getElementById('ar-prompt').classList.add('hidden')">Cancel / 取消</button>
+        <button id="start-ar-btn" class="btn-primary">Start AR 📷</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ AR OVERLAY (dom-overlay for immersive-ar) ═══════════ -->
+  <div id="ar-overlay" class="hidden">
+    <!-- AR Study header -->
+    <div id="ar-header">
+      <span>📚 AR Study Room · AI Tutor</span>
+      <button onclick="document.getElementById('ar-overlay').classList.add('hidden')" class="icon-btn" style="color:#fff">✕</button>
+    </div>
+    <!-- AR chat messages -->
+    <div id="ar-messages"></div>
+    <!-- AR input -->
+    <div id="ar-input-row">
+      <input type="text" id="ar-chat-input" placeholder="Ask anything… / 问我任何问题…" />
+      <button id="ar-chat-send" class="btn-primary">Send</button>
+      <button id="ar-voice-btn" class="voice-btn-ar" title="Voice input">🎤</button>
+    </div>
+  </div>
+
+  <!-- ══ THREE.JS CANVAS ══════════════════════════════════════ -->
+  <canvas id="canvas"></canvas>
+
+  <!-- ══ TOP NAV ══════════════════════════════════════════════ -->
+  <nav id="top-nav">
+    <div class="logo-badge">🌸 Campus Companion XR</div>
+    <button id="home-btn" class="nav-btn">🏠 Home</button>
+    <button id="chat-toggle-btn" class="nav-btn">💬 Chat</button>
+    <!-- VR button — hidden if WebXR not supported -->
+    <button id="vr-btn" class="nav-btn vr-btn">🥽 Enter VR</button>
+    <!-- AR Study shortcut — only shown in study zone -->
+    <button id="ar-study-btn" class="nav-btn ar-btn" style="display:none">📷 AR Study</button>
+    <!-- Voice button -->
+    <button id="voice-btn" class="nav-btn voice-nav-btn" title="Voice input · 语音输入">🎤 Voice</button>
+  </nav>
+
+  <!-- ══ VOICE STATUS ══════════════════════════════════════════ -->
+  <div id="voice-status" class="hidden voice-status-bar"></div>
+
+  <!-- ══ ZONE INDICATOR ══════════════════════════════════════ -->
+  <div id="zone-indicator" class="hidden">
+    <span id="zone-icon">🏠</span>
+    <span id="zone-name">Central Hall · 中央大厅</span>
+  </div>
+
+  <!-- ══ HOVER TOOLTIP ════════════════════════════════════════ -->
+  <div id="zone-tooltip" class="hidden"></div>
+
+  <!-- ══ TRIPO STATUS ══════════════════════════════════════════ -->
+  <div id="tripo-status" class="hidden">
+    <span class="tripo-icon">⚙️</span>
+    <span class="tripo-label">Generating 3D companion… 生成虚拟伴侣中…</span>
+    <div class="tripo-bar"><div class="tripo-bar-fill"></div></div>
+  </div>
+
+  <!-- ══ CHAT PANEL ════════════════════════════════════════════ -->
+  <div id="chat-panel" class="hidden">
+    <div id="chat-header">
+      <div class="companion-info">
+        <div class="companion-avatar-icon" id="companion-avatar-icon">👩‍🎓</div>
+        <div class="companion-text">
+          <div class="companion-name">Lele · 乐��</div>
+          <div class="companion-mode" id="chat-mode">💬 Chat Corner · 谈心区</div>
+        </div>
+      </div>
+      <button id="chat-close" class="icon-btn">✕</button>
+    </div>
+    <div id="chat-messages"></div>
+    <div id="chat-input-area">
+      <input type="text" id="chat-input" placeholder="Type or use 🎤 voice… / 打字或语音…" autocomplete="off" maxlength="500" />
+      <button id="chat-send" class="btn-primary send-btn">Send ↑</button>
+    </div>
+  </div>
+
+  <!-- ══ GAME PANEL ════════════════════════════════════════════ -->
+  <div id="game-panel" class="hidden">
+    <div class="game-header">
+      <h3>🎮 Game Zone · 轻游戏区</h3>
+      <button id="game-close" class="icon-btn">✕</button>
+    </div>
+    <div class="game-tabs">
+      <button class="game-tab active" data-game="coloring">🎨 Coloring · 涂色</button>
+      <button class="game-tab" data-game="gomoku">⚫ Gomoku · 五子棋</button>
+      <button class="game-tab" data-game="go">🔵 Go · 围棋</button>
+      <button class="game-tab" data-game="chess">♟ Chess · 象棋</button>
+    </div>
+    <div id="game-canvas-container"><canvas id="game-canvas"></canvas></div>
+    <div id="game-status" class="game-status-bar">Your turn! · 轮到你了！</div>
+  </div>
+
+  <!-- ══ BOTTOM HINT ════════════════════════════════════════ -->
+  <div id="nav-hint">
+    <span>🖱️ Drag to look around · 拖拽环视</span>
+    <span>👆 Click portals to enter · 点击传送门进入</span>
+    <span>🥽 Quest: pull trigger on portal · 扳机键进入区域</span>
+  </div>
+
+  <!-- ══ Scripts ════════════════════════════════════════════ -->
+  <script src="js/config.js"></script>
+  <script src="js/tripo.js"></script>
+  <script src="js/agent.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/games.js"></script>
+  <script src="js/voice.js"></script>
+  <script src="js/vr-panels.js"></script>
+  <script type="module" src="js/main.js"></script>
+
+</body>
+</html>
