@@ -9,7 +9,7 @@ const CONFIG = {
   TRIPO_BASE_URL: 'https://api.tripo3d.ai/v2/openapi',
 
   // ── 智谱 Zhipu GLM (AI companion chat, OpenAI-compatible) ─
-  ZHIPU_API_KEY: 'a5a4680f48c6462fadc767b5c6e42a3b.g7h7HsxHajpQoLVl',
+  ZHIPU_API_KEY: '',   // Set your Zhipu API key here
   ZHIPU_BASE_URL: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
   ZHIPU_MODEL: 'glm-4-flash',
 
